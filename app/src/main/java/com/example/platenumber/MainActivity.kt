@@ -21,8 +21,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        edit = findViewById(R.id.editPlate) // Initialize edit after setContentView
-        submit = findViewById(R.id.button) // Initialize submit after setContentView
+        edit = findViewById(R.id.editPlate)
+        submit = findViewById(R.id.button)
         vehicleStatusApiService =
             RetrofitHelper.createRetrofitInstance().create(VehicleStatusApiService::class.java)
 
@@ -62,8 +62,6 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     } else {
-                        // Handle the case where the response is null
-                        // This might occur if the API returned an empty response
                         runOnUiThread {
                             Toast.makeText(
                                 this@MainActivity,
@@ -73,8 +71,6 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    // Handle the error case here
-                    // For example, you can show an error message to the user using Toast or a dialog
                     runOnUiThread {
                         Toast.makeText(
                             this@MainActivity,
@@ -84,8 +80,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                // Handle exceptions (e.g., network errors) here
-                // You can show an error message to the user for network-related issues
                 runOnUiThread {
                     Toast.makeText(
                         this@MainActivity,
