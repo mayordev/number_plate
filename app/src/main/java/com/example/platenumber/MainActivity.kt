@@ -1,73 +1,81 @@
 package com.example.platenumber
 
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.example.platenumber.RetrofitHelper.createRetrofitInstance
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import retrofit2.create
 
 class MainActivity : AppCompatActivity() {
-    private  lateinit var edit : EditText
-    private var plateNumber: String = "";
-    private lateinit var submit: Button
-    private lateinit var vehicleStatusApiService: VehicleStatusApiService
+    lateinit var edit: EditText // Declare EditText as lateinit
+    lateinit var submit: Button // Declare Button as lateinit
+    lateinit var vehicleStatusApiService: VehicleStatusApiService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        edit  = findViewById(R.id.editPlate)
-        submit = findViewById(R.id.button)
 
-
-         vehicleStatusApiService = createRetrofitInstance().create(VehicleStatusApiService::class.java)
-        // launching a new coroutine
-
+        edit = findViewById(R.id.editPlate) // Initialize edit after setContentView
+        submit = findViewById(R.id.button) // Initialize submit after setContentView
+        vehicleStatusApiService =
+            RetrofitHelper.createRetrofitInstance().create(VehicleStatusApiService::class.java)
 
         submit.setOnClickListener {
             verify()
         }
-
     }
 
-     fun verify (){
-         plateNumber = edit.text.toString()
-        if (plateNumber.length != 10){
-            Toast.makeText(this, "Please enter a valid Plate Number", Toast.LENGTH_LONG).show()
-        }
-        else{
-            val call: Call<VehicleStatusResponse> = vehicleStatusApiService.getVehicleStatus(plateNumber)
-            call.enqueue(object : Callback<VehicleStatusResponse> {
-                override fun onResponse(
-                    call: Call<VehicleStatusResponse>,
-                    response: Response<VehicleStatusResponse>
-                ) {
-                    val intent = Intent(this@MainActivity, MainActivity2::class.java).also {
-                        it.putExtra("EXTRA_MESSAGE", plateNumber)
-                        startActivity(it)
+    fun verify() {
+        val plateNumber = edit.text.toString()
+
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val result = vehicleStatusApiService.getVehicleStatus(plateNumber)
+                if (result.isSuccessful) {
+                    val vehicleStatus = result.body()
+                    if (vehicleStatus != null) {
+                        val intent = Intent(this@MainActivity, MainActivity2::class.java)
+                        intent.putExtra("VEHICLE_STATUS", vehicleStatus)
+                        startActivity(intent)
+                    } else {
+                        // Handle the case where the response is null
+                        // This might occur if the API returned an empty response
+                        runOnUiThread {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Empty response from the API.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                } else {
+                    // Handle the error case here
+                    // For example, you can show an error message to the user using Toast or a dialog
+                    runOnUiThread {
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Failed to fetch vehicle status.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
-
-                override fun onFailure(call: Call<VehicleStatusResponse>, t: Throwable) {
+            } catch (e: Exception) {
+                // Handle exceptions (e.g., network errors) here
+                // You can show an error message to the user for network-related issues
+                runOnUiThread {
                     Toast.makeText(
                         this@MainActivity,
-                        "Something went wrong...Please try later!",
-                        Toast.LENGTH_SHORT
+                        "Network error. Please check your connection.",
+                        Toast.LENGTH_LONG
                     ).show()
                 }
-            })
-
-
-
-
+            }
         }
-
     }
 }
