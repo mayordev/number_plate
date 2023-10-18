@@ -33,6 +33,14 @@ class MainActivity : AppCompatActivity() {
 
     fun verify() {
         val plateNumber = edit.text.toString()
+        if (plateNumber.isEmpty()){
+            Toast.makeText(
+                this@MainActivity,
+                "Enter plate number",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
 
         GlobalScope.launch(Dispatchers.IO) {
             try {
@@ -40,9 +48,19 @@ class MainActivity : AppCompatActivity() {
                 if (result.isSuccessful) {
                     val vehicleStatus = result.body()
                     if (vehicleStatus != null) {
-                        val intent = Intent(this@MainActivity, MainActivity2::class.java)
-                        intent.putExtra("VEHICLE_STATUS", vehicleStatus)
-                        startActivity(intent)
+                        if (result.isSuccessful) {
+                            val intent = Intent(this@MainActivity, MainActivity2::class.java)
+                            intent.putExtra("VEHICLE_STATUS", vehicleStatus)
+                            startActivity(intent)
+                        }else{
+                            runOnUiThread {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Empty response from the API.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
                     } else {
                         // Handle the case where the response is null
                         // This might occur if the API returned an empty response
